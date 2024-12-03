@@ -224,7 +224,14 @@ extension CardSuit
 		{
 			return Color(assetColour)
 		}
-		return nil
+		switch suit
+		{
+			case CardSuit.spade:	return Color.black
+			case CardSuit.club:		return Color.black
+			case CardSuit.heart:	return Color.red
+			case CardSuit.diamond:	return Color.red
+			default:		return nil
+		}
 	}
 }
 
@@ -310,10 +317,18 @@ public struct CardView : View
 
 	var backing : some ShapeStyle
 	{
-		return LinearGradient(colors: [Color("BackingGradient0"),Color("BackingGradient1"),Color("BackingGradient2"),Color("BackingGradient3")], startPoint: .topLeading, endPoint: .bottomTrailing)//, center: .center, startRadius:15, endRadius:50)
+		let gradientColours =  [Color("BackingGradient0"),Color("BackingGradient1"),Color("BackingGradient2"),Color("BackingGradient3")].map
+		{
+			if $0 == nil
+			{
+				return Color.red
+			}
+			return $0
+		}
+		return LinearGradient(colors:gradientColours, startPoint: .topLeading, endPoint: .bottomTrailing)//, center: .center, startRadius:15, endRadius:50)
 	}
 	var pipColour : Color	{	suitColour ?? Color.blue	}
-	var paperColour : Color { cardMode == .EmptySlot ? Color.clear : Color("Paper")	}
+	var paperColour : Color { cardMode == .EmptySlot ? Color.clear : (Color(UIColor(named:"Paper") ?? UIColor.white))	}
 	var paperEdge = StrokeStyle(lineWidth: 0.5)
 	var paperEdgeColour = Color.gray
 	var emptySlotEdge = StrokeStyle(lineWidth: 1.0, dash: [3,5], dashPhase: 0 )
@@ -610,7 +625,6 @@ public struct InteractiveCard : View
 		]
 	]
 	 
-	
 	let spacing = 5.0
 	VStack(spacing:spacing)
 	{
@@ -631,7 +645,7 @@ public struct InteractiveCard : View
 		}
 	}
 	.padding(50)
-	.background(Color("Felt"))
+	.background( Color( UIColor(named:"Felt") ?? UIColor.green ) )
 	.preferredColorScheme(.light)
 }
 
