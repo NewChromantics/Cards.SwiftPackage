@@ -117,7 +117,7 @@ struct IconStack<Content: View>: View
 
 
 //	rank
-typealias CardRank = Int
+public typealias CardRank = Int
 
 extension CardRank
 {
@@ -169,13 +169,13 @@ extension CardRank : ExpressibleByStringLiteral
 }
 
 
-struct CardMeta : Transferable, Codable, /*Identifiable,*/ Hashable
+public struct CardMeta : Transferable, Codable, /*Identifiable,*/ Hashable
 {
 	//	in case we want 2 cards with the same rank&suit
 	//	dont make the id the rank&suit
 	var id = UUID()
 	
-	static var transferRepresentation : some TransferRepresentation
+	public static var transferRepresentation : some TransferRepresentation
 	{
 		CodableRepresentation(contentType:.text)
 	}
@@ -185,7 +185,7 @@ struct CardMeta : Transferable, Codable, /*Identifiable,*/ Hashable
 
 
 	//	shorthand for QH (queen heart)
-	init(_ valueAndSuit:String)
+	public init(_ valueAndSuit:String)
 	{
 		if valueAndSuit.count != 2
 		{
@@ -197,13 +197,13 @@ struct CardMeta : Transferable, Codable, /*Identifiable,*/ Hashable
 	}
 		
 	
-	init(value: CardRank, suit: String)
+	public init(value: CardRank, suit: String)
 	{
 		self.value = value
 		self.suit = suit
 	}
 	
-	init(_ value: Int, _ suit: String)
+	public init(_ value: Int, _ suit: String)
 	{
 		self.value = CardRank(integerLiteral:value)
 		self.suit = suit
@@ -228,30 +228,30 @@ extension CardSuit
 	}
 }
 
-class CardSuit
+public class CardSuit
 {
-	static let heart = "suit.heart.fill"
-	static let spade = "suit.spade.fill"
-	static let club = "suit.club.fill"
-	static let diamond = "suit.diamond.fill"
+	static public let heart = "suit.heart.fill"
+	static public let spade = "suit.spade.fill"
+	static public let club = "suit.club.fill"
+	static public let diamond = "suit.diamond.fill"
 }
 
 
-
-struct CardStyle
-{
-
-}
-
-
-
-struct CardView : View
+public struct CardView : View
 {
 	var cardMeta : CardMeta?
 	var value : CardRank? { cardMeta?.value }
 	var suit : String? { cardMeta?.suit }	//	sf symbol
-	var faceUp : Bool = true
+	var faceUp : Bool
 
+	public init(cardMeta:CardMeta?,faceUp:Bool=true,z: CGFloat=0)
+	{
+		self.cardMeta = cardMeta
+		self.faceUp = faceUp
+		self.z = z
+	}
+	
+	
 	enum CardMode
 	{
 		case EmptySlot
@@ -425,7 +425,7 @@ struct CardView : View
 	}
 	
 
-	var body: some View
+	public var body: some View
 	{
 		cardBody()
 		.clipShape(
@@ -465,14 +465,22 @@ struct CardView : View
 
 
 //	this is a bit of a demo/test, rather than an actual usable card
-struct InteractiveCard : View
+public struct InteractiveCard : View
 {
-	@State var cardMeta : CardMeta?
-	@State var z : CGFloat = 0
-	@State var faceUp = true
-
+	@State public var cardMeta : CardMeta?
+	@State public var z : CGFloat = 0
+	@State public var faceUp = true
+	@State public var isDropping = false
+	
+	public init(cardMeta: CardMeta?,faceUp: Bool=true)
+	{
+		//	when being forced to add an init to a view, init the state properly
+		_cardMeta = State(initialValue: cardMeta)
+		_faceUp = State(initialValue: faceUp)
+	}
+	
 	//@State var droppingMeta : CardMeta? = nil
-	var droppingMeta : CardMeta?
+	public var droppingMeta : CardMeta?
 	{
 		if ( isDropping )
 		{
@@ -480,10 +488,9 @@ struct InteractiveCard : View
 		}
 		return nil
 	}
-	@State var isDropping = false
 
 	
-	var body: some View
+	public var body : some View
 	{
 		let draggable = ( cardMeta != nil )
 		let droppable = !draggable
