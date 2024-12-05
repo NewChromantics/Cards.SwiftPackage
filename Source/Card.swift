@@ -283,7 +283,15 @@ public struct CardView : View
 	var isSolidCard : Bool { cardMode != .EmptySlot }
 
 	var suitSystemImageName : String	{	return suit	?? "x.circle" }
-	var pip : Image 	{ Image(systemName:suitSystemImageName)	}
+	var pip : Image
+	{
+		//	see if there's an image or SF symbol asset in this app
+		if let assetImage = UIImage(named: suitSystemImageName) ?? UIImage(symbolName: suitSystemImageName, variableValue: 0.0)
+		{
+			return Image(uiImage:assetImage)
+		}
+		return Image(systemName:suitSystemImageName)
+	}
 	
 
 	let width : CGFloat = 80	//	in future use geometry reader
