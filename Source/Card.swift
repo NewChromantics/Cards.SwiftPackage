@@ -130,8 +130,10 @@ extension CardRank
 
 extension CardRank : ExpressibleByIntegerLiteral
 {
-	init(integerLiteral value: Int) {
-		self = CardRank(value)
+	init(integerLiteral value: Int)
+	{
+		//self = CardRank(value)
+		self = value
 	}
 }
 
@@ -162,8 +164,15 @@ extension CardRank : ExpressibleByStringLiteral
 			case "Q":	self.init(CardRank.queen)
 			case "K":	self.init(CardRank.king)
 			case "A":	self.init(CardRank.ace)
-			//default:	return nil
-			default:	self = 0
+			case "t":	self.init(CardRank.t)
+			case "j":	self.init(CardRank.jack)
+			case "q":	self.init(CardRank.queen)
+			case "k":	self.init(CardRank.king)
+			case "a":	self.init(CardRank.ace)
+			default:
+				//	stop recursive call
+				self = (value as NSString).integerValue
+				//self = Int(stringLiteral: value)
 		}
 	}
 }
@@ -173,7 +182,7 @@ public struct CardMeta : Transferable, Codable, /*Identifiable,*/ Hashable
 {
 	//	in case we want 2 cards with the same rank&suit
 	//	dont make the id the rank&suit
-	var id = UUID()
+	//var id = UUID()
 	
 	public static var transferRepresentation : some TransferRepresentation
 	{
@@ -193,7 +202,7 @@ public struct CardMeta : Transferable, Codable, /*Identifiable,*/ Hashable
 		}
 		let v = String(valueAndSuit[0])
 		self.value = CardRank(stringLiteral: v)
-		self.suit = String(valueAndSuit[1])
+		self.suit = CardSuit.GetSuitFromCode(valueAndSuit[1])
 	}
 		
 	
@@ -231,6 +240,18 @@ extension CardSuit
 			case CardSuit.heart:	return Color.red
 			case CardSuit.diamond:	return Color.red
 			default:		return nil
+		}
+	}
+	
+	static func GetSuitFromCode(_ char:Character) -> String
+	{
+		switch char
+		{
+			case "h":	return CardSuit.heart
+			case "s":	return CardSuit.spade
+			case "d":	return CardSuit.diamond
+			case "c":	return CardSuit.club
+			default:	return String(char)
 		}
 	}
 }
