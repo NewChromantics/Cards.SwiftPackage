@@ -466,7 +466,7 @@ public struct CardView : View
 	@ViewBuilder
 	func RoundedRect(cornerRadius:CGFloat,borderColour:Color,borderStyle:StrokeStyle,fill:Color?) -> some View
 	{
-		if #available(macOS 14.0, *)
+		if #available(macOS 14.0,iOS 17.0, *)
 		{
 			RoundedRectangle(cornerRadius: cornerRadius)
 				.fill( fill ?? Color.clear )
