@@ -306,12 +306,14 @@ public struct CardView : View
 	var value : CardRank? { cardMeta?.value }
 	var suit : String? { cardMeta?.suit }	//	sf symbol
 	var faceUp : Bool
+	var shadowsEnabled : Bool
 
-	public init(cardMeta:CardMeta?,faceUp:Bool=true,z: CGFloat=0)
+	public init(cardMeta:CardMeta?,faceUp:Bool=true,z: CGFloat=0,shadows:Bool=true)
 	{
 		self.cardMeta = cardMeta
 		self.faceUp = faceUp
 		self.z = z
+		self.shadowsEnabled = shadows
 	}
 	
 	
@@ -548,7 +550,7 @@ public struct CardView : View
 			.rotation3DEffect( .degrees(flipRotation), axis:(x:0,y:1,z:0), perspective:0.1 )
 			.animation(.interpolatingSpring(duration:flipRotationDuration,bounce:0.3,initialVelocity: 7), value: flipRotation)
 		//	add & depth shadow after rotation otherwise it rotates the offset&shadow
-			.if(isSolidCard)
+			.if(isSolidCard && shadowsEnabled)
 			{
 				$0
 					.shadow(radius: shadowRadius,x:shadowOffsetX,y:shadowOffsetY)
