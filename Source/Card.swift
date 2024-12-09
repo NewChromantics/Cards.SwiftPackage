@@ -264,6 +264,41 @@ public class CardSuit
 	static public let diamond = "suit.diamond.fill"
 }
 
+struct CardStyle
+{
+	var width : CGFloat = 80	//	in future use geometry reader
+	
+	var isTinyCard : Bool		{	width < 50	}
+	
+	static let standardHeightRatio = 1.4//1.4 is real card
+	let heightRatio = CardStyle.standardHeightRatio
+	var height : CGFloat {	width * heightRatio	}
+	var cornerRadius : CGFloat { width * 0.09 }
+	var paperBorder : CGFloat { width * 0.04 }
+	var paperBackingBorder : CGFloat { width * 0.06 }
+	var pipMinWidth : CGFloat { isTinyCard ? width*0.5 : 8 }
+	var pipWidth : CGFloat { max( pipMinWidth, width * 0.15) }
+	var pipHeight : CGFloat { pipWidth }
+	
+	var innerBorderCornerRadius : CGFloat { width * 0.03 }
+	//var innerBorderColour : Color { Color.blue }	//	for around queens etc
+	var innerBorderColour : Color { Color.clear }
+	var innerBorderPadding : CGFloat = 4
+	
+	init(fit:CGSize)
+	{
+		//	see if we need to make width shrink down to fit height
+		let height = fit.width * heightRatio
+		if height > fit.height
+		{
+			self.width = fit.height / heightRatio
+		}
+		else
+		{
+			self.width = fit.width
+		}
+	}
+}
 
 public struct CardView : View
 {
@@ -315,20 +350,6 @@ public struct CardView : View
 	}
 	
 
-	let width : CGFloat = 80	//	in future use geometry reader
-	let heightRatio = 1.4//1.4 is real card
-	var height : CGFloat {	width * heightRatio	}
-	var cornerRadius : CGFloat { width * 0.09 }
-	var paperBorder : CGFloat { width * 0.04 }
-	var paperBackingBorder : CGFloat { width * 0.06 }
-	var pipMinWidth : CGFloat { 8 }
-	var pipWidth : CGFloat { max( pipMinWidth, width * 0.15) }
-	var pipHeight : CGFloat { pipWidth }
-	
-	var innerBorderCornerRadius : CGFloat { width * 0.03 }
-	//var innerBorderColour : Color { Color.blue }	//	for around queens etc
-	var innerBorderColour : Color { Color.clear }
-	var innerBorderPadding : CGFloat = 4
 
 	
 	var z : CGFloat = 0
@@ -346,13 +367,17 @@ public struct CardView : View
 
 	var backing : some ShapeStyle
 	{
-		let gradientColours =  [Color("BackingGradient0"),Color("BackingGradient1"),Color("BackingGradient2"),Color("BackingGradient3")].map
+		//	only UIKit colours are null if missing
+		let gradientColours = ["BackingGradient0","BackingGradient1","BackingGradient2","BackingGradient3"].map
 		{
-			if $0 == nil
+			if let colour = UIColor(named:$0)
+			{
+				return Color(colour)
+			}
+			else
 			{
 				return Color.red
 			}
-			return $0
 		}
 		return LinearGradient(colors:gradientColours, startPoint: .topLeading, endPoint: .bottomTrailing)//, center: .center, startRadius:15, endRadius:50)
 	}
@@ -382,38 +407,45 @@ public struct CardView : View
 			.symbolRenderingMode( multiColour ? .multicolor : .monochrome )
 	}
 	
-	var cornerPipView : some View
+	@ViewBuilder
+	func cornerPipView(_ style:CardStyle,center:Bool=false) -> some View
 	{
 		//	pip
-		HStack(alignment: .top)
+		HStack(alignment: center ? .center : .top)
 		{
 			VStack(alignment:.center, spacing:0)
 			{
 				Text( value?.description ?? "no value" )
 					.foregroundStyle(pipColour)
 					.lineLimit(1)
-					.font(.system(size: pipHeight))
+					.font(.system(size: style.pipHeight))
 					.fontWeight(.bold)
 
 				pipView
-					.frame(width: pipWidth,height: pipHeight)
+					.frame(width: style.pipWidth,height: style.pipHeight)
 				
+				if !center
+				{
+					Spacer()
+				}
+			}
+			if !center
+			{
 				Spacer()
 			}
-			Spacer()
 		}
 	}
 	
 	//	view for the center of the card
 	//	either a bunch of pips, or a big image!
 	@ViewBuilder
-	var ValueView : some View
+	func ValueView(_ style:CardStyle) -> some View
 	{
 		IconStack(iconCount:value ?? 0)
 		{
 			pipView
 		}
-		.padding(innerBorderPadding)
+		.padding(style.innerBorderPadding)
 		//.background(.green)
 		.frame(maxWidth: .infinity,maxHeight: .infinity)
 		//.background(.yellow)
@@ -424,85 +456,106 @@ public struct CardView : View
 				.stroke( innerBorderColour, lineWidth: borderWidth)
 		)
 		 */
-		.padding(innerBorderPadding)
+		.padding(style.innerBorderPadding)
 
 	}
 	
+	//	*nicely* handly polyfill for rounded rectangle
 	@ViewBuilder
-	func cardBody() -> some View
+	func RoundedRect(cornerRadius:CGFloat,borderColour:Color,borderStyle:StrokeStyle,fill:Color?) -> some View
 	{
-		VStack(spacing: 0)
+		if #available(macOS 14.0, *)
 		{
-			if cardMode == .EmptySlot
+			RoundedRectangle(cornerRadius: cornerRadius)
+				.fill( fill ?? Color.clear )
+				.stroke(borderColour ?? Color.clear,style:borderStyle)
+		}
+		else
+		{
+			let x = RoundedRectangle(cornerRadius: cornerRadius)
+			Rectangle()
+				.background(x)
+		}
+	}
+	
+	@ViewBuilder
+	func cardBody(/*_ style:CardStyle*/) -> some View
+	{
+		GeometryReader
+		{
+			geometry in
+			let style = CardStyle(fit: geometry.size)
+
+			VStack(spacing: 0)
 			{
-				Spacer()
-			}
-			else
-			{
-				Rectangle()
-				.fill(paperColour)
-				.overlay
+				if cardMode == .EmptySlot
 				{
-					var showFace = (flipRotation.animatableData < 90)
-					if !showFace//cardMode == .UnknownCard
-					{
-						RoundedRectangle(cornerRadius: cornerRadius)
-							.fill(backing)
-							.padding(paperBackingBorder)
-					}
-					else // if faceUp
-					{
-						ZStack
+					RoundedRectangle(cornerRadius: style.cornerRadius)
+						.stroke(emptySlotEdgeColour,style: emptySlotEdge)
+					//Text("x")
+				}
+				else
+				{
+					RoundedRect(cornerRadius: style.cornerRadius, borderColour: paperEdgeColour, borderStyle: paperEdge, fill: paperColour)
+						.overlay
 						{
-							ValueView
-								.padding(pipWidth)
-							cornerPipView
-							cornerPipView
-								.rotationEffect(.degrees(180))
+							var showFace = (flipRotation.animatableData < 90)
+							if !showFace//cardMode == .UnknownCard
+							{
+								RoundedRectangle(cornerRadius: style.cornerRadius)
+									.fill(backing)
+									.padding(style.paperBackingBorder)
+									//.frame(maxWidth: .infinity,maxHeight: .infinity)
+							}
+							else if style.isTinyCard
+							{
+								cornerPipView(style,center: true)
+							}
+							else // if faceUp
+							{
+								ZStack
+								{
+									ValueView(style)
+										.padding(style.pipWidth)
+									cornerPipView(style)
+									cornerPipView(style)
+										.rotationEffect(.degrees(180))
+								}
+								.padding(style.paperBorder)
+							}
+							
 						}
-						.padding(paperBorder)
-					}
 				}
 			}
+			.frame(maxWidth: .infinity,maxHeight: .infinity)
+			/*
+			.clipShape(
+				RoundedRectangle(cornerRadius: style.cornerRadius)
+			)
+			 */
+			//.animation(nil)	//	stops lerp between views so card face doesnt fade as it flips
 		}
-		//.animation(nil)	//	stops lerp between views
 	}
 	
 
 	public var body: some View
 	{
+		let style = CardStyle(fit:CGSize(width:50,height:90))
+		
 		cardBody()
-		.clipShape(
-			RoundedRectangle(cornerRadius: cornerRadius)
-		)
-		//.padding(paperBorder)
-		//.background(paperColour)
-		.clipShape(
-			RoundedRectangle(cornerRadius: cornerRadius)
-		)
-		.frame(width:width,height: height)
-		.rotation3DEffect( .degrees(flipRotation), axis:(x:0,y:1,z:0), perspective:0.1 )
-		.animation(.interpolatingSpring(duration:flipRotationDuration,bounce:0.3,initialVelocity: 7), value: flipRotation)
+			.aspectRatio(CGSize(width:1,height:CardStyle.standardHeightRatio), contentMode: .fit)
+			//.frame(width:style.width,height: style.height)
+			.rotation3DEffect( .degrees(flipRotation), axis:(x:0,y:1,z:0), perspective:0.1 )
+			.animation(.interpolatingSpring(duration:flipRotationDuration,bounce:0.3,initialVelocity: 7), value: flipRotation)
 		//	add & depth shadow after rotation otherwise it rotates the offset&shadow
-		.if(isSolidCard)
-		{
-			$0
-				.shadow(radius: shadowRadius,x:shadowOffsetX,y:shadowOffsetY)
-				.overlay(
-					RoundedRectangle(cornerRadius: cornerRadius)
-						.stroke(paperEdgeColour,style:paperEdge)
-				)
-		}
-		.if(!isSolidCard)
-		{
-			$0
-				.overlay(
-					RoundedRectangle(cornerRadius: cornerRadius)
-						.stroke(emptySlotEdgeColour,style: emptySlotEdge)
-				)
-		}
-		.offset(x:posOffsetX,y:posOffsetY)
-
+			.if(isSolidCard)
+			{
+				$0
+					.shadow(radius: shadowRadius,x:shadowOffsetX,y:shadowOffsetY)
+			}
+			.offset(x:posOffsetX,y:posOffsetY)
+		//	we dont set size here, only aspect ratio, this locks the geometry size for cardbody
+			//.frame(width: style.width/*,height:style.height*/)
 	}
 }
 
@@ -603,10 +656,40 @@ public struct InteractiveCard : View
 }
 
 
-#Preview {
+@ViewBuilder
+func RenderRowsOfCards(_ cards:[[CardMeta?]]) -> some View
+{
+	let spacing = 5.0
+	VStack(spacing:spacing)
+	{
+		ForEach(Array(cards.enumerated()), id:\.element)
+		{
+			rowIndex,cardRow in
+			HStack(spacing:spacing)
+			{
+				ForEach(Array(cardRow.enumerated()), id:\.element)
+				{
+					colindex,CardRank in
+					let z = Int.random(in: 0...20)
+					let faceUp = Int.random(in: 0...4) != 0
+					//InteractiveCard(cardMeta: CardRank, z:CGFloat(z))
+					InteractiveCard(cardMeta: CardRank,faceUp:faceUp)
+				}
+			}
+		}
+	}
+	.padding(10)
+	.background( Color( UIColor(named:"Felt") ?? UIColor.green ) )
+	.preferredColorScheme(.light)
+}
+
+
+#Preview
+{
 	let cards2 = [
 		[
-			CardMeta(value:7,suit: CardSuit.heart),
+			CardMeta("qh"),
+			CardMeta(value:7,suit: CardSuit.diamond),
 			CardMeta(value:2,suit: CardSuit.spade),
 		]
 	]
@@ -653,28 +736,8 @@ public struct InteractiveCard : View
 			nil
 		]
 	]
-	 
-	let spacing = 5.0
-	VStack(spacing:spacing)
-	{
-		ForEach(Array(cards.enumerated()), id:\.element)
-		{
-			rowIndex,cardRow in
-			HStack(spacing:spacing)
-			{
-				ForEach(Array(cardRow.enumerated()), id:\.element)
-				{
-					colindex,CardRank in
-					let z = Int.random(in: 0...20)
-					let faceUp = Int.random(in: 0...4) != 0
-					//InteractiveCard(cardMeta: CardRank, z:CGFloat(z))
-					InteractiveCard(cardMeta: CardRank,faceUp:faceUp)
-				}
-			}
-		}
-	}
-	.padding(50)
-	.background( Color( UIColor(named:"Felt") ?? UIColor.green ) )
-	.preferredColorScheme(.light)
+	
+	RenderRowsOfCards(cards2)
+	RenderRowsOfCards(cards)
 }
 
