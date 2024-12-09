@@ -10,8 +10,19 @@ typealias UIImage = NSImage
 #endif
 
 
+//	ios doesn't have a constructor for symbolName, it works via named:
+//	macos has seperate constructors
 #if canImport(UIKit)//ios
-#else
+extension UIImage
+{
+	convenience init?(symbolName:String,variableValue:CGFloat)
+	{
+		self.init(named:symbolName)
+	}
+}
+#endif
+
+#if !canImport(UIKit)
 
 //	use same Image(uiImage:) constructor on macos & ios
 extension Image
