@@ -426,6 +426,10 @@ public struct CardView : View
 			.scaledToFit()
 			.foregroundStyle(pipColour/*, accentColour*/)
 			.symbolRenderingMode( multiColour ? .multicolor : .monochrome )
+			//	when svgs get too small, coregraphics starts breaking with NaNs
+			//	we get around this by having a min size (1 is too small!)
+			//	ideally we make a mipped image for tiny cases
+			.frame(minWidth: CardStyle.pipMinWidth,minHeight: CardStyle.pipMinWidth)
 	}
 	
 	@ViewBuilder
