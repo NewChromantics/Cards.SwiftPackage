@@ -52,7 +52,8 @@ struct IconStack<Content: View>: View
 		//	layout is 3 columns
 		//	<4 all in center
 		//	other wise edge and remainder in middle
-		let columnRows : [Int] = {
+		let columnRows : [Int] = 
+		{
 			if iconCount == 1
 			{
 				return [1]
@@ -86,14 +87,16 @@ struct IconStack<Content: View>: View
 		
 		HStack(spacing:iconSpacing)
 		{
-			ForEach(columnRows, id:\.self)
+			ForEach(columnRows.indices)
 			{
-				rowCount in
+				columnIndex in
+				let rowCount = columnRows[columnIndex]
 				VStack(spacing:iconSpacing)
 				{
 					let rows = max(0,rowCount)
 					ForEach(0..<rows)
-					{_ in
+					{
+						_ in
 						content()
 							//	fill column so items dont bunch in middle
 							.frame(maxHeight: .infinity)
@@ -268,7 +271,7 @@ struct CardStyle
 {
 	var width : CGFloat = 80	//	in future use geometry reader
 	
-	var isTinyCard : Bool		{	width < 50	}
+	var isTinyCard : Bool		{	width < 45	}
 	
 	static let standardHeightRatio = 1.4//1.4 is real card
 	let heightRatio = CardStyle.standardHeightRatio
