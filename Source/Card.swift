@@ -271,7 +271,7 @@ struct CardStyle
 {
 	var width : CGFloat = 80	//	in future use geometry reader
 	
-	var isTinyCard : Bool		{	width < 45	}
+	var isTinyCard : Bool		{	height < (CardStyle.pipMinWidth*8)	}	//	gr: vertical matters more!
 	
 	static let standardHeightRatio = 1.4//1.4 is real card
 	let heightRatio = CardStyle.standardHeightRatio
@@ -279,8 +279,9 @@ struct CardStyle
 	var cornerRadius : CGFloat { width * 0.09 }
 	var paperBorder : CGFloat { width * 0.04 }
 	var paperBackingBorder : CGFloat { width * 0.06 }
-	var pipMinWidth : CGFloat { isTinyCard ? width*0.5 : 8 }
-	var pipWidth : CGFloat { max( pipMinWidth, width * 0.15) }
+	//var pipMinWidth : CGFloat { isTinyCard ? width*0.5 : 8 }
+	static var pipMinWidth = 8.0	//	needs to be at least 4/5 to stop coregraphics errors where it makes NaNs
+	var pipWidth : CGFloat { max( CardStyle.pipMinWidth, isTinyCard ? width * 0.50 : width * 0.15 ) }
 	var pipHeight : CGFloat { pipWidth }
 	
 	var innerBorderCornerRadius : CGFloat { width * 0.03 }
@@ -708,8 +709,10 @@ func RenderRowsOfCards(_ cards:[[CardMeta?]]) -> some View
 {
 	let cards2 = [
 		[
-			CardMeta("qh"),
-			CardMeta(value:7,suit: CardSuit.diamond),
+			CardMeta("Ah"),
+			CardMeta("4c"),
+			CardMeta("5s"),
+			CardMeta(value:14,suit: CardSuit.diamond),
 			CardMeta(value:2,suit: CardSuit.spade),
 		]
 	]
