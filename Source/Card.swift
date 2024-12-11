@@ -38,6 +38,41 @@ extension StringProtocol
 
 
 
+func GetPokerPipLayout(iconCount:Int) -> [Int]
+{
+	//	layout is 3 columns
+	//	<4 all in center
+	//	other wise edge and remainder in middle
+	if iconCount == 1
+	{
+		return [1]
+	}
+	else if iconCount < 4
+	{
+		return [0,iconCount,0]
+	}
+	else if iconCount > 6 || (iconCount%2)==1
+	{
+		//	when odd number
+		//	put more on the outside but even up
+		var side = iconCount/3
+		var remain = (iconCount - side - side) % iconCount
+		if remain >= side && remain > 1
+		{
+			remain -= 2
+			side += 1
+		}
+		return [side,remain,side]
+	}
+	else
+	{
+		let side = iconCount/2
+		let remain = (iconCount - side - side) % iconCount
+		return [side,remain,side]
+	}
+}
+
+
 //	https://www.swiftbysundell.com/articles/switching-between-swiftui-hstack-vstack/
 struct IconStack<Content: View>: View
 {
@@ -49,42 +84,9 @@ struct IconStack<Content: View>: View
 	
 	var body: some View
 	{
-		//	layout is 3 columns
-		//	<4 all in center
-		//	other wise edge and remainder in middle
-		let columnRows : [Int] = 
-		{
-			if iconCount == 1
-			{
-				return [1]
-			}
-			else if iconCount < 4
-			{
-				return [0,iconCount,0]
-			}
-			else if iconCount > 6 || (iconCount%2)==1
-			{
-				//	when odd number
-				//	put more on the outside but even up
-				var side = iconCount/3
-				var remain = (iconCount - side - side) % iconCount
-				if remain >= side && remain > 1
-				{
-					remain -= 2
-					side += 1
-				}
-				return [side,remain,side]
-			}
-			else
-			{
-				let side = iconCount/2
-				let remain = (iconCount - side - side) % iconCount
-				return [side,remain,side]
-			}
-		}()
+		let columnRows = GetPokerPipLayout(iconCount: iconCount)
 		
 		let iconSpacing = 2.0
-		
 		HStack(spacing:iconSpacing)
 		{
 			ForEach(columnRows.indices)
@@ -117,6 +119,87 @@ struct IconStack<Content: View>: View
 	}
 }
 
+func Lerp(_ min:CGFloat,_ max:CGFloat,_ value:CGFloat) -> CGFloat
+{
+	return (value * (max-min)) + min
+}
+
+func NormalToRect(_ tx:CGFloat,_ ty:CGFloat,rect:[CGFloat]) -> CGPoint
+{
+	let x = Lerp(rect[0], rect[0]+rect[2], tx)
+	let y = Lerp(rect[1], rect[1]+rect[3], ty)
+	return CGPoint(x:x,y:y)
+}			
+
+
+struct CardIconStack : View
+{
+	var iconCount : Int
+	var icon : Image
+	var iconColour : Color
+	
+	var body: some View
+	{
+		let columnRows = GetPokerPipLayout(iconCount: iconCount)
+
+		Canvas(rendersAsynchronously: false)
+		{
+			context,canvasSize  in
+			let columnCount = columnRows.count
+			let rowCount = columnRows.max() ?? 1
+			
+			var resolvedIcon = context.resolve(icon)
+			//	https://stackoverflow.com/a/76207661/355753
+			//	for this to work, svg's need Resizing:Preserve Vector Data
+			resolvedIcon.shading = .color(iconColour)
+
+			let iconRatio = resolvedIcon.size.height / resolvedIcon.size.width
+			let columnWidth = canvasSize.width / CGFloat(columnCount)
+			let rowHeightWidth = canvasSize.height / CGFloat(rowCount)
+			
+			//	fit icon to row or column
+			let IconSize = CGSize(width: columnWidth, height: columnWidth * iconRatio)
+			let IconPad = IconSize.width * 0.08
+			let ImageSize = CGSize(width:IconSize.width-IconPad-IconPad,height:IconSize.height-IconPad-IconPad)
+
+			var DrawRect = [0,0,canvasSize.width,canvasSize.height]
+			let CanvasPadX = IconSize.width / 2.0
+			let CanvasPadY = IconSize.height / 2.0
+			DrawRect[0] += CanvasPadX
+			DrawRect[1] += CanvasPadY
+			DrawRect[2] -= CanvasPadX * 2.0
+			DrawRect[3] -= CanvasPadY * 2.0
+			
+			
+			
+			for columnIndex in 0..<columnRows.count
+			{
+				let rows = columnRows[columnIndex]
+				for rowIndex in 0..<rows
+				{
+					//	calc center
+					var x = CGFloat(columnIndex) / CGFloat(max(1,columnCount-1))
+					var y = rows==1 ? 0.5 : CGFloat(rowIndex) / CGFloat(max(1,rows-1))
+					let pos = NormalToRect( x, y, rect:DrawRect )
+					
+					//	calculate rect with padding
+					let iconPos = CGPoint(x: pos.x-(ImageSize.width/2.0), y: pos.y-(ImageSize.height/2.0))
+					let rect = CGRect(origin: iconPos, size: ImageSize)
+					context.draw(resolvedIcon,in: rect)
+					/*debug center
+					let circlew = 6.0
+					let circlePos = CGPoint(x: pos.x-(circlew/2.0), y: pos.y-(circlew/2.0))
+					let circle = CGRect(origin: circlePos, size: CGSize(width:circlew, height: circlew))
+					var path = Circle().path(in: circle)
+					context.fill(path, with: .color(.blue))
+					 */
+				}
+			}
+		}
+	
+		
+	}
+}
 
 
 //	rank
@@ -232,7 +315,10 @@ extension CardSuit
 {
 	static func GetDefaultColourFor(suit:String) -> Color?
 	{
-		if let assetColour = UIColor(named:suit)
+		//	on ios, having an asset named same as an image crashes
+		let suitColourName = suit
+		//let suitColourName = "colour.\(suit)"
+		if let assetColour = UIColor(named:suitColourName)
 		{
 			return Color(assetColour)
 		}
@@ -419,7 +505,7 @@ public struct CardView : View
 	var pipView : some View
 	{
 		//	special case :)
-		let multiColour = suit == "rainbow"
+		let multiColour = false//suit == "rainbow"
 		
 		pip
 			.resizable()
@@ -466,10 +552,13 @@ public struct CardView : View
 	@ViewBuilder
 	func ValueView(_ style:CardStyle) -> some View
 	{
+		/*
 		IconStack(iconCount:value ?? 0)
 		{
 			pipView
 		}
+		 */
+		CardIconStack(iconCount: value ?? 0, icon: GetPipImage(), iconColour: pipColour )
 		.padding(style.innerBorderPadding)
 		//.background(.green)
 		.frame(maxWidth: .infinity,maxHeight: .infinity)
