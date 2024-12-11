@@ -373,7 +373,8 @@ struct CardStyle
 	var innerBorderCornerRadius : CGFloat { width * 0.03 }
 	//var innerBorderColour : Color { Color.blue }	//	for around queens etc
 	var innerBorderColour : Color { Color.clear }
-	var innerBorderPadding : CGFloat = 4
+	var innerBorderPaddingHorizontal : CGFloat = 2
+	var innerBorderPaddingVertical : CGFloat = 10
 	
 	init(fit:CGSize)
 	{
@@ -559,19 +560,11 @@ public struct CardView : View
 		}
 		 */
 		CardIconStack(iconCount: value ?? 0, icon: GetPipImage(), iconColour: pipColour )
-		.padding(style.innerBorderPadding)
-		//.background(.green)
-		.frame(maxWidth: .infinity,maxHeight: .infinity)
-		//.background(.yellow)
-		//.border(.blue)
-		/*
-		.overlay(
-			RoundedRectangle(cornerRadius: innerBorderCornerRadius)
-				.stroke( innerBorderColour, lineWidth: borderWidth)
-		)
-		 */
-		.padding(style.innerBorderPadding)
-
+			//.background(.yellow)	//	debug inner value area
+			.padding([.leading,.trailing],style.innerBorderPaddingHorizontal)
+			.padding([.top,.bottom],style.innerBorderPaddingVertical)
+			//.background(.green)	//	debug inner value area
+			.frame(maxWidth: .infinity,maxHeight: .infinity)
 	}
 	
 	//	*nicely* handly polyfill for rounded rectangle
@@ -630,7 +623,7 @@ public struct CardView : View
 								ZStack
 								{
 									ValueView(style)
-										.padding(style.pipWidth)
+										.padding([.leading,.trailing],style.pipWidth)
 									cornerPipView(style)
 									cornerPipView(style)
 										.rotationEffect(.degrees(180))
