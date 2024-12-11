@@ -310,6 +310,11 @@ public struct CardView : View
 	var suit : String? { cardMeta?.suit }	//	sf symbol
 	var faceUp : Bool
 	var shadowsEnabled : Bool
+	var isSolidCard : Bool { cardMode != .EmptySlot }
+	var suitSystemImageName : String	{	return suit	?? "x.circle" }
+	var pip : Image!//	{	GetPipImage()	}
+	var cardMode : CardMode!//	{	GetCardMode()	}
+	var backing : LinearGradient!//any ShapeStyle//	{	GetBacking()	}
 
 	public init(cardMeta:CardMeta?,faceUp:Bool=true,z: CGFloat=0,shadows:Bool=true)
 	{
@@ -317,6 +322,11 @@ public struct CardView : View
 		self.faceUp = faceUp
 		self.z = z
 		self.shadowsEnabled = shadows
+		
+		//	cache stuff
+		self.pip = GetPipImage()
+		self.cardMode = GetCardMode()
+		self.backing = GetBacking()
 	}
 	
 	
@@ -326,7 +336,8 @@ public struct CardView : View
 		case UnknownCard
 		case Card
 	}
-	var cardMode : CardMode
+
+	func GetCardMode() -> CardMode
 	{
 		if cardMeta == nil
 		{
@@ -341,19 +352,23 @@ public struct CardView : View
 			return .Card
 		}
 	}
-	var isSolidCard : Bool { cardMode != .EmptySlot }
 
-	var suitSystemImageName : String	{	return suit	?? "x.circle" }
-	var pip : Image
+	func GetPipImage() -> Image
 	{
-		//	see if there's an image or SF symbol asset in this app
-		if let assetImage = UIImage(named: suitSystemImageName) ?? UIImage(symbolName: suitSystemImageName, variableValue: 0.0)
+		let imageName = suitSystemImageName
+		//	on ios (not macos), using UIImage(named:) will crash if there's a colour asset of the same name
+		//	even if the symbol is a system image
+		//	so if there's a matching asset colour, we have to bail out
+		let assetColour = UIColor(named:imageName)
+		if assetColour == nil 
 		{
-			return Image(uiImage:assetImage)
+			if let assetImage = UIImage(named: imageName) ?? UIImage(symbolName: imageName, variableValue: 0.0)
+			{
+				return Image(uiImage:assetImage)
+			}
 		}
 		return Image(systemName:suitSystemImageName)
 	}
-	
 
 
 	
@@ -368,9 +383,9 @@ public struct CardView : View
 	var posOffsetY : CGFloat { depth * -zYMult }
 	var shadowSofteness : CGFloat	{ 0.30	}//0..1
 	var shadowRadius : CGFloat	{ depth / (10.0 * (1.0-shadowSofteness) ) }
+	
 
-
-	var backing : some ShapeStyle
+	func GetBacking() -> LinearGradient//some ShapeStyle
 	{
 		//	only UIKit colours are null if missing
 		let gradientColours = ["BackingGradient0","BackingGradient1","BackingGradient2","BackingGradient3"].map
