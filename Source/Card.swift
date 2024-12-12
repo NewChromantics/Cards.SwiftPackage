@@ -420,6 +420,14 @@ public struct CardView : View
 		self.pip = GetPipImage()
 		self.cardMode = GetCardMode()
 		self.backing = GetBacking()
+		
+		renderer = ImageRenderer(
+			//content:CardIconStack(iconCount: 5, icon: Image(systemName: "suit.club"), iconColour: Color.red)
+			content:CardIconStack(iconCount: value ?? 0, icon: GetPipImage(), iconColour: pipColour )
+		)
+		renderer.scale = 10.0
+		
+	
 	}
 	
 	
@@ -429,7 +437,7 @@ public struct CardView : View
 		case UnknownCard
 		case Card
 	}
-
+	
 	func GetCardMode() -> CardMode
 	{
 		if cardMeta == nil
@@ -445,7 +453,7 @@ public struct CardView : View
 			return .Card
 		}
 	}
-
+	
 	func GetPipImage() -> Image
 	{
 		let imageName = suitSystemImageName
@@ -462,8 +470,8 @@ public struct CardView : View
 		}
 		return Image(systemName:suitSystemImageName)
 	}
-
-
+	
+	
 	
 	var z : CGFloat = 0
 	var zXMult : CGFloat { 0.2 }
@@ -477,7 +485,7 @@ public struct CardView : View
 	var shadowSofteness : CGFloat	{ 0.30	}//0..1
 	var shadowRadius : CGFloat	{ depth / (10.0 * (1.0-shadowSofteness) ) }
 	
-
+	
 	func GetBacking() -> LinearGradient//some ShapeStyle
 	{
 		//	only UIKit colours are null if missing
@@ -505,7 +513,7 @@ public struct CardView : View
 	
 	var flipRotation : CGFloat {faceUp ? 0 : 180}
 	var flipRotationDuration = 1.0
-
+	
 	
 	@ViewBuilder
 	var pipView : some View
@@ -518,9 +526,9 @@ public struct CardView : View
 			.scaledToFit()
 			.foregroundStyle(pipColour/*, accentColour*/)
 			.symbolRenderingMode( multiColour ? .multicolor : .monochrome )
-			//	when svgs get too small, coregraphics starts breaking with NaNs
-			//	we get around this by having a min size (1 is too small!)
-			//	ideally we make a mipped image for tiny cases
+		//	when svgs get too small, coregraphics starts breaking with NaNs
+		//	we get around this by having a min size (1 is too small!)
+		//	ideally we make a mipped image for tiny cases
 			.frame(minWidth: CardStyle.pipMinWidth,minHeight: CardStyle.pipMinWidth)
 	}
 	
@@ -537,7 +545,7 @@ public struct CardView : View
 					.lineLimit(1)
 					.font(.system(size: style.pipHeight))
 					.fontWeight(.bold)
-
+				
 				pipView
 					.frame(width: style.pipWidth,height: style.pipHeight)
 				
@@ -553,19 +561,37 @@ public struct CardView : View
 		}
 	}
 	
+	//@State var valueViewCache : UIImage?
+	var valueViewCache : UIImage? {
+		return renderer.nsImage
+	}
+	/*@StateObject */private var renderer : ImageRenderer<CardIconStack>!
+	
 	//	view for the center of the card
 	//	either a bunch of pips, or a big image!
 	@ViewBuilder
 	func ValueView(_ style:CardStyle) -> some View
 	{
-		//	gr: could cache this?
-		
-		CardIconStack(iconCount: value ?? 0, icon: GetPipImage(), iconColour: pipColour )
+		if let image = valueViewCache 
+		{
+			Image(uiImage: image)
+				.resizable()
+				.scaledToFit()
 			//.background(.yellow)	//	debug inner value area
-			.padding([.leading,.trailing],style.innerBorderPaddingHorizontal)
-			.padding([.top,.bottom],style.innerBorderPaddingVertical)
+				.padding([.leading,.trailing],style.innerBorderPaddingHorizontal)
+				.padding([.top,.bottom],style.innerBorderPaddingVertical)
 			//.background(.green)	//	debug inner value area
-			.frame(maxWidth: .infinity,maxHeight: .infinity)
+				.frame(maxWidth: .infinity,maxHeight: .infinity)
+		}
+
+		/*
+		CardIconStack(iconCount: value ?? 0, icon: GetPipImage(), iconColour: pipColour )
+		 //.background(.yellow)	//	debug inner value area
+		 .padding([.leading,.trailing],style.innerBorderPaddingHorizontal)
+		 .padding([.top,.bottom],style.innerBorderPaddingVertical)
+		 //.background(.green)	//	debug inner value area
+		 .frame(maxWidth: .infinity,maxHeight: .infinity)
+		*/
 	}
 	
 	//	*nicely* handly polyfill for rounded rectangle
