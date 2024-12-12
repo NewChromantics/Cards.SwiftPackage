@@ -133,52 +133,6 @@ func GetCachedPokerPipLayout(iconCount:Int) -> PipLayout
 }
 
 
-//	https://www.swiftbysundell.com/articles/switching-between-swiftui-hstack-vstack/
-struct IconStack<Content: View>: View
-{
-	//var horizontalAlignment = HorizontalAlignment.center
-	//var verticalAlignment = VerticalAlignment.top
-	//var spacing: CGFloat?
-	var iconCount : Int
-	@ViewBuilder var content: () -> Content
-	
-	var body: some View
-	{
-		let columnRows = GetPokerPipMatrix(iconCount: iconCount)
-		
-		let iconSpacing = 2.0
-		HStack(spacing:iconSpacing)
-		{
-			ForEach(columnRows.indices)
-			{
-				columnIndex in
-				let rowCount = columnRows[columnIndex]
-				VStack(spacing:iconSpacing)
-				{
-					let rows = max(0,rowCount)
-					ForEach(0..<rows)
-					{
-						_ in
-						content()
-							//	fill column so items dont bunch in middle
-							.frame(maxHeight: .infinity)
-							//.background(.blue)
-					}
-					if rows == 0
-					{
-						//Text("x")
-						Spacer()
-					}
-				}
-				//	forces equal width
-				.frame(minWidth: 0, maxWidth: .infinity)
-				//.background(.yellow)
-			}
-		}
-		//.frame(minWidth: 0, maxWidth: .infinity)
-	}
-}
-
 func Lerp(_ min:CGFloat,_ max:CGFloat,_ value:CGFloat) -> CGFloat
 {
 	return (value * (max-min)) + min
@@ -604,12 +558,8 @@ public struct CardView : View
 	@ViewBuilder
 	func ValueView(_ style:CardStyle) -> some View
 	{
-		/*
-		IconStack(iconCount:value ?? 0)
-		{
-			pipView
-		}
-		 */
+		//	gr: could cache this?
+		
 		CardIconStack(iconCount: value ?? 0, icon: GetPipImage(), iconColour: pipColour )
 			//.background(.yellow)	//	debug inner value area
 			.padding([.leading,.trailing],style.innerBorderPaddingHorizontal)
