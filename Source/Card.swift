@@ -37,8 +37,7 @@ extension StringProtocol
 }
 
 
-
-func GetPokerPipLayout(iconCount:Int) -> [Int]
+func GetPokerPipMatrix(iconCount:Int) -> [Int]
 {
 	//	layout is 3 columns
 	//	<4 all in center
@@ -72,6 +71,67 @@ func GetPokerPipLayout(iconCount:Int) -> [Int]
 	}
 }
 
+struct PipLayout
+{
+	var columns : Int
+	var maxRows : Int
+	var positions : [CGPoint]
+}
+
+//	get normalised coords which are consistent, so can be cached
+func GetPokerPipLayout(iconCount:Int) -> PipLayout
+{
+	let columnRows = GetPokerPipMatrix(iconCount: iconCount)
+
+	let columnCount = columnRows.count
+	let biggestRowCount = columnRows.max() ?? 1
+
+	var pipCenters = [CGPoint]()
+	
+	//	todo: some predefined layouts for specific cards
+	
+	for columnIndex in 0..<columnRows.count
+	{
+		let rows = columnRows[columnIndex]
+		for rowIndex in 0..<rows
+		{
+			//	calc center
+			var x = CGFloat(columnIndex) / CGFloat(max(1,columnCount-1))
+
+			//	todo: center column, align to middle, instead of top/bottom
+			//			unless the outer columns are empty
+			if columnIndex == 1 && columnRows[0] > 0
+			{
+				var y = /*rows==1 ? 0.5 : */CGFloat(rowIndex+1) / CGFloat(max(1,biggestRowCount))
+				pipCenters.append( CGPoint(x:x,y:y) )
+			}
+			else
+			{
+				var x = CGFloat(columnIndex) / CGFloat(max(1,columnCount-1))
+				var y = rows==1 ? 0.5 : CGFloat(rowIndex) / CGFloat(max(1,rows-1))
+				pipCenters.append( CGPoint(x:x,y:y) )
+			}
+		}
+	}
+
+	let layout = PipLayout(columns: columnCount, maxRows: biggestRowCount, positions: pipCenters)
+	return layout
+}
+
+private var PipLayoutCache = [Int:PipLayout]()
+
+func GetCachedPokerPipLayout(iconCount:Int) -> PipLayout
+{
+	if let cache = PipLayoutCache[iconCount]
+	{
+		return cache
+	}
+	
+	let Layout = GetPokerPipLayout(iconCount:iconCount)
+	PipLayoutCache[iconCount] = Layout
+	return Layout
+}
+
 
 //	https://www.swiftbysundell.com/articles/switching-between-swiftui-hstack-vstack/
 struct IconStack<Content: View>: View
@@ -84,7 +144,7 @@ struct IconStack<Content: View>: View
 	
 	var body: some View
 	{
-		let columnRows = GetPokerPipLayout(iconCount: iconCount)
+		let columnRows = GetPokerPipMatrix(iconCount: iconCount)
 		
 		let iconSpacing = 2.0
 		HStack(spacing:iconSpacing)
@@ -140,13 +200,14 @@ struct CardIconStack : View
 	
 	var body: some View
 	{
-		let columnRows = GetPokerPipLayout(iconCount: iconCount)
+		let pipLayoutNormalised = GetCachedPokerPipLayout(iconCount: iconCount)
 
-		Canvas(rendersAsynchronously: false)
+		Canvas(rendersAsynchronously: true)
 		{
 			context,canvasSize  in
-			let columnCount = columnRows.count
-			let rowCount = columnRows.max() ?? 1
+			
+			let columnCount = pipLayoutNormalised.columns
+			let rowCount = pipLayoutNormalised.maxRows
 			
 			var resolvedIcon = context.resolve(icon)
 			//	https://stackoverflow.com/a/76207661/355753
@@ -155,11 +216,16 @@ struct CardIconStack : View
 
 			let iconRatio = resolvedIcon.size.height / resolvedIcon.size.width
 			let columnWidth = canvasSize.width / CGFloat(columnCount)
-			let rowHeightWidth = canvasSize.height / CGFloat(rowCount)
+			let rowHeight = canvasSize.height / CGFloat(rowCount)
 			
 			//	fit icon to row or column
-			let IconSize = CGSize(width: columnWidth, height: columnWidth * iconRatio)
-			let IconPad = IconSize.width * 0.08
+			var IconSize = CGSize(width: columnWidth, height: columnWidth * iconRatio)
+			if ( IconSize.height > rowHeight )
+			{
+				IconSize = CGSize(width: rowHeight/iconRatio, height:rowHeight )
+			}
+			
+			let IconPad = IconSize.width * 0.05
 			let ImageSize = CGSize(width:IconSize.width-IconPad-IconPad,height:IconSize.height-IconPad-IconPad)
 
 			var DrawRect = [0,0,canvasSize.width,canvasSize.height]
@@ -170,30 +236,15 @@ struct CardIconStack : View
 			DrawRect[2] -= CanvasPadX * 2.0
 			DrawRect[3] -= CanvasPadY * 2.0
 			
-			
-			
-			for columnIndex in 0..<columnRows.count
+			pipLayoutNormalised.positions.forEach
 			{
-				let rows = columnRows[columnIndex]
-				for rowIndex in 0..<rows
-				{
-					//	calc center
-					var x = CGFloat(columnIndex) / CGFloat(max(1,columnCount-1))
-					var y = rows==1 ? 0.5 : CGFloat(rowIndex) / CGFloat(max(1,rows-1))
-					let pos = NormalToRect( x, y, rect:DrawRect )
-					
-					//	calculate rect with padding
-					let iconPos = CGPoint(x: pos.x-(ImageSize.width/2.0), y: pos.y-(ImageSize.height/2.0))
-					let rect = CGRect(origin: iconPos, size: ImageSize)
-					context.draw(resolvedIcon,in: rect)
-					/*debug center
-					let circlew = 6.0
-					let circlePos = CGPoint(x: pos.x-(circlew/2.0), y: pos.y-(circlew/2.0))
-					let circle = CGRect(origin: circlePos, size: CGSize(width:circlew, height: circlew))
-					var path = Circle().path(in: circle)
-					context.fill(path, with: .color(.blue))
-					 */
-				}
+				center in
+				let pos = NormalToRect( center.x, center.y, rect:DrawRect )
+				
+				//	calculate rect with padding
+				let iconPos = CGPoint(x: pos.x-(ImageSize.width/2.0), y: pos.y-(ImageSize.height/2.0))
+				let rect = CGRect(origin: iconPos, size: ImageSize)
+				context.draw(resolvedIcon,in: rect)
 			}
 		}
 	
@@ -793,10 +844,20 @@ func RenderRowsOfCards(_ cards:[[CardMeta?]]) -> some View
 	let cards2 = [
 		[
 			CardMeta("Ah"),
-			CardMeta("4c"),
-			CardMeta("5s"),
-			CardMeta(value:14,suit: CardSuit.diamond),
-			CardMeta(value:2,suit: CardSuit.spade),
+			CardMeta("2c"),
+			CardMeta("3s"),
+			CardMeta("4d"),
+			CardMeta("5c"),
+			CardMeta("6s"),
+			CardMeta("7h"),
+		],
+		[
+			CardMeta("8d"),
+			CardMeta("9s"),
+			CardMeta("Th"),
+			CardMeta("Jc"),
+			CardMeta("Qd"),
+			CardMeta("Kh"),
 		]
 	]
 	let cards = [
