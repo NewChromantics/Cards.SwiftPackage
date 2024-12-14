@@ -305,9 +305,6 @@ public struct CardMeta : Transferable, Codable, /*Identifiable,*/ Hashable
 	}
 }
 
-#if !canImport(UIKit)
-typealias UIColor = NSColor
-#endif
 
 //	add extensions to this...
 //	does it need to be an enum?

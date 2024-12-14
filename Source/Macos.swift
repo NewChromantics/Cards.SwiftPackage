@@ -4,18 +4,18 @@
 */
 import SwiftUI
 
-#if canImport(UIKit)//ios
-#else
-typealias UIImage = NSImage
-#endif
 
+#if !canImport(UIKit)
+public typealias UIColor = NSColor
+public typealias UIImage = NSImage
+#endif
 
 //	ios doesn't have a constructor for symbolName, it works via named:
 //	macos has seperate constructors
 #if canImport(UIKit)//ios
 extension UIImage
 {
-	convenience init?(symbolName:String,variableValue:CGFloat)
+	public convenience init?(symbolName:String,variableValue:CGFloat)
 	{
 		self.init(named:symbolName)
 	}
@@ -27,7 +27,7 @@ extension UIImage
 //	use same Image(uiImage:) constructor on macos & ios
 extension Image
 {
-	init(uiImage:UIImage)
+	public init(uiImage:UIImage)
 	{
 		self.init(nsImage:uiImage)
 	}
