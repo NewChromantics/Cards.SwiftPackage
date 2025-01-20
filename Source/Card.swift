@@ -364,9 +364,15 @@ extension CardSuit
 	static func GetDefaultColourFor(suit:String) -> Color?
 	{
 		//	on ios, having an asset named same as an image crashes
-		let suitColourName = suit
-		//let suitColourName = "colour.\(suit)"
-		if let assetColour = UIColor(named:suitColourName)
+		//	gr: the crash comes when using an image, but finds a colour
+		let suitColourNameA = suit
+		let suitColourNameB = "\(suit)_SuitColour"
+		
+		if let assetColour = UIColor(named:suitColourNameA)
+		{
+			return Color(assetColour)
+		}
+		if let assetColour = UIColor(named:suitColourNameB)
 		{
 			return Color(assetColour)
 		}
