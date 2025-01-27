@@ -455,7 +455,7 @@ struct CardStyle
 
 public struct CardView : View
 {
-	var enableDebug = true
+	var enableDebug = false
 	var cardMeta : CardMeta?
 	var value : CardRank? { cardMeta?.value }
 	var suit : String? { cardMeta?.suit }	//	sf symbol
