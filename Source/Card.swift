@@ -315,11 +315,9 @@ extension CardRank : ExpressibleByStringLiteral
 }
 
 
-public struct CardMeta : Transferable, Codable, /*Identifiable,*/ Hashable
+public struct CardMeta : Transferable, Codable, Hashable, ExpressibleByStringLiteral
 {
-	//	in case we want 2 cards with the same rank&suit
-	//	dont make the id the rank&suit
-	//var id = UUID()
+	public typealias StringLiteralType = String
 	
 	public static var transferRepresentation : some TransferRepresentation
 	{
@@ -329,7 +327,11 @@ public struct CardMeta : Transferable, Codable, /*Identifiable,*/ Hashable
 	var value : CardRank
 	var suit : String
 
-
+	public init(stringLiteral: Self.StringLiteralType)
+	{
+		self.init(stringLiteral)
+	}
+	
 	//	shorthand for QH (queen heart)
 	public init(_ valueAndSuit:String)
 	{
