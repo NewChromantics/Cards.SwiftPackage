@@ -9,7 +9,7 @@ public struct CardPile : View
 	func getZOffset(cardIndex:Int) -> CGFloat
 	{
 		var z = CGFloat(cardIndex) * 0.9
-		z = min( 10.0, z )
+		//z = min( 10.0, z )
 		return -z
 	}
 	
