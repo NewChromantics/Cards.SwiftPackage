@@ -1,4 +1,4 @@
-// swift-tools-version: 5.8
+// swift-tools-version: 5.9
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 
 
@@ -11,7 +11,7 @@ let package = Package(
 	
 	platforms: [
 		.iOS(.v16),		//	16 for TransferRepresentation
-		.macOS(.v13)	//	13 for TransferRepresentation
+		.macOS(.v14)	//	13 for TransferRepresentation
 	],
 	
 

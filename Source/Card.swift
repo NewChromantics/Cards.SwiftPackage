@@ -710,8 +710,8 @@ public struct CardView : View
 	public var body: some View
 	{
 		let style = CardStyle(fit:CGSize(width:50,height:90))
-		
 		cardBody()
+			.transition(.scale(1))
 			.aspectRatio(CGSize(width:1,height:CardStyle.standardHeightRatio), contentMode: .fit)
 			//.frame(width:style.width,height: style.height)
 			.rotation3DEffect( .degrees(flipRotation), axis:(x:0,y:1,z:0), perspective:0.1 )
