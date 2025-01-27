@@ -45,13 +45,15 @@ public struct CardPile : View
 			}
 			
 		}
-		.padding(10)
+		//.padding(10)
 		.frame(height:100)
+		/*
 		.background(
 			Rectangle()
 				.stroke(.white,style: StrokeStyle(dash:[4,4]))
 				.foregroundStyle(.clear)
 		)
+		 */
 	}
 }
 
@@ -117,13 +119,15 @@ public struct CardBoard : View
 								
 			}
 		}
-		.padding(10)
+		//.padding(10)
 		.frame(maxWidth:.infinity)
+		/*
 		.background(
 			Rectangle()
 				.stroke(.white,style: StrokeStyle(dash:[4,4]))
 				.foregroundStyle(.clear)
 		)
+		 */
 	}
 }
 
