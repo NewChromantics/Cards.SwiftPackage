@@ -728,7 +728,7 @@ public struct CardView : View
 		{
 			if enableDebug
 			{
-				let code = self.cardMeta.map{ "\($0.value)\($0.suit)" } ?? "null"
+				let code = self.cardMeta.map{ "\($0.value) \($0.suit)" } ?? "null"
 				let up = faceUp ? "UP" : ""
 				Text("\(code) \(up)")
 					.background(.black)
