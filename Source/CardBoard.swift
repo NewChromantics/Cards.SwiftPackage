@@ -118,7 +118,6 @@ public struct CardBoard : View
 			}
 		}
 		.padding(10)
-		.frame(height:100)
 		.frame(maxWidth:.infinity)
 		.background(
 			Rectangle()
