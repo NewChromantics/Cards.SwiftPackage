@@ -405,10 +405,11 @@ public class CardSuit
 	static public let spade = "suit.spade.fill"
 	static public let club = "suit.club.fill"
 	static public let diamond = "suit.diamond.fill"
+	static public let allSuits = [heart,spade,club,diamond]
 	
 	static public var randomSuit : String
 	{
-		return [heart,spade,club,diamond].randomElement()!
+		return allSuits.randomElement()!
 	}
 }
 
