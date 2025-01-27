@@ -455,6 +455,7 @@ struct CardStyle
 
 public struct CardView : View
 {
+	var enableDebug = true
 	var cardMeta : CardMeta?
 	var value : CardRank? { cardMeta?.value }
 	var suit : String? { cardMeta?.suit }	//	sf symbol
@@ -723,6 +724,16 @@ public struct CardView : View
 					.shadow(radius: shadowRadius,x:shadowOffsetX,y:shadowOffsetY)
 			}
 			.offset(x:posOffsetX,y:posOffsetY)
+			.overlay
+		{
+			if enableDebug
+			{
+				let code = self.cardMeta.map{ "\($0.value)\($0.suit)" } ?? "null"
+				let up = faceUp ? "UP" : ""
+				Text("\(code) \(up)")
+					.background(.black)
+			}
+		}
 		//	we dont set size here, only aspect ratio, this locks the geometry size for cardbody
 			//.frame(width: style.width/*,height:style.height*/)
 	}
