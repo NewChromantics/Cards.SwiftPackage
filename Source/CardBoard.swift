@@ -1,7 +1,7 @@
 import SwiftUI
 
 
-struct CardPile : View 
+public struct CardPile : View 
 {
 	let cardDeckNamespace : Namespace.ID
 	var cards : [CardMeta]
@@ -13,7 +13,13 @@ struct CardPile : View
 		return -z
 	}
 	
-	var body: some View 
+	public init(cardDeckNamespace: Namespace.ID, cards: [CardMeta])
+	{
+		self.cardDeckNamespace = cardDeckNamespace
+		self.cards = cards
+	}
+	
+	public var body: some View 
 	{
 		ZStack
 		{
@@ -49,12 +55,23 @@ struct CardPile : View
 	}
 }
 
-struct CardBoard : View 
+
+public struct CardBoard : View 
 {
 	let cardDeckNamespace : Namespace.ID
-	var cards : [CardMeta]
+	public var cards : [CardMeta]
+	public var explicitCardSpaces : Int? = nil
+	public var allCardsFaceUp : Bool = true
 	
-	var body: some View 
+	public init(cardDeckNamespace: Namespace.ID, cards: [CardMeta], explicitCardSpaces: Int? = nil,allCardsFaceUp:Bool=true) 
+	{
+		self.cardDeckNamespace = cardDeckNamespace
+		self.cards = cards
+		self.explicitCardSpaces = explicitCardSpaces
+		self.allCardsFaceUp = allCardsFaceUp
+	}
+	
+	public var body: some View 
 	{
 		VStack
 		{
@@ -72,7 +89,7 @@ struct CardBoard : View
 					ForEach(cards,id:\.hashValue)
 					{
 						card in
-						CardView(cardMeta: card)
+						CardView(cardMeta: card, faceUp: allCardsFaceUp)
 							.overlay
 						{
 							/*
@@ -83,6 +100,15 @@ struct CardBoard : View
 						}
 						.matchedGeometryEffect(id: card.hashValue, in: cardDeckNamespace)
 					}
+					/*
+					if cards.count < explicitCardSpaces ?? 0
+					{
+						ForEach( cards.count...explicitCardSpaces )
+						{
+							CardView(cardMeta:nil)
+						}
+					}	
+					*/
 				}
 				.overlay
 				{
@@ -103,7 +129,7 @@ struct CardBoard : View
 }
 
 
-struct Table : View 
+struct ExampleTable : View 
 {
 	static var allCards : [CardMeta]
 	{
@@ -226,7 +252,7 @@ struct Table : View
 
 #Preview 
 {
-	Table()
+	ExampleTable()
 	.padding(20)
 	.frame(width:400,height: 350)
 	.background(.red)
