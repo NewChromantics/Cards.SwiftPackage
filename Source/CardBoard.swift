@@ -3,9 +3,17 @@ import SwiftUI
 
 public struct CardPile : View 
 {
+	var debugName : String? = nil
 	let cardDeckNamespace : Namespace.ID
 	var cards : [CardMeta]
 	
+	public init(cardDeckNamespace: Namespace.ID, cards: [CardMeta],debugName:String?=nil)
+	{
+		self.debugName = debugName
+		self.cardDeckNamespace = cardDeckNamespace
+		self.cards = cards
+	}
+
 	func getZOffset(cardIndex:Int) -> CGFloat
 	{
 		var z = CGFloat(cardIndex) * 0.9
@@ -13,11 +21,6 @@ public struct CardPile : View
 		return -z
 	}
 	
-	public init(cardDeckNamespace: Namespace.ID, cards: [CardMeta])
-	{
-		self.cardDeckNamespace = cardDeckNamespace
-		self.cards = cards
-	}
 	
 	public var body: some View 
 	{
@@ -27,7 +30,7 @@ public struct CardPile : View
 			//ForEach(cards,id:\.hashValue)
 			{
 				index,card in
-				CardView(cardMeta: card, faceUp: false)
+				CardView(cardMeta: card, faceUp: false, debugString:self.debugName)
 					.overlay
 				{
 					/*
@@ -41,7 +44,7 @@ public struct CardPile : View
 			}
 			if cards.count == 0
 			{
-				CardView(cardMeta: nil)
+				CardView(cardMeta: nil,debugString: self.debugName)
 			}
 			
 		}
@@ -60,13 +63,15 @@ public struct CardPile : View
 
 public struct CardBoard : View 
 {
+	var debugName : String? = nil
 	let cardDeckNamespace : Namespace.ID
 	public var cards : [CardMeta]
 	public var explicitCardSpaces : Int? = nil
 	public var allCardsFaceUp : Bool = true
 	
-	public init(cardDeckNamespace: Namespace.ID, cards: [CardMeta], explicitCardSpaces: Int? = nil,allCardsFaceUp:Bool=true) 
+	public init(cardDeckNamespace: Namespace.ID, cards: [CardMeta], explicitCardSpaces: Int? = nil,allCardsFaceUp:Bool=true,debugName:String?=nil) 
 	{
+		self.debugName = debugName
 		self.cardDeckNamespace = cardDeckNamespace
 		self.cards = cards
 		self.explicitCardSpaces = explicitCardSpaces
@@ -91,7 +96,7 @@ public struct CardBoard : View
 					ForEach(cards,id:\.hashValue)
 					{
 						card in
-						CardView(cardMeta: card, faceUp: allCardsFaceUp)
+						CardView(cardMeta: card, faceUp: allCardsFaceUp,debugString:debugName)
 							.overlay
 						{
 							/*
@@ -219,12 +224,12 @@ struct ExampleTable : View
 	{
 		VStack
 		{
-			CardPile(cardDeckNamespace: cardDeck, cards: Cards1 )
+			CardPile(cardDeckNamespace: cardDeck, cards: Cards1, debugName:"Top" )
 				.onTapGesture {
 					MoveTopToBottom()
 				}
-			CardBoard(cardDeckNamespace: cardDeck, cards: Cards2 )
-			CardBoard(cardDeckNamespace: cardDeck, cards: Cards3 )
+			CardBoard(cardDeckNamespace: cardDeck, cards: Cards2, debugName:"Middle" )
+			CardBoard(cardDeckNamespace: cardDeck, cards: Cards3, debugName:"Bottom" )
 			
 			HStack
 			{

@@ -456,6 +456,7 @@ struct CardStyle
 public struct CardView : View
 {
 	var enableDebug = false
+	var debugString : String? = nil
 	var cardMeta : CardMeta?
 	var value : CardRank? { cardMeta?.value }
 	var suit : String? { cardMeta?.suit }	//	sf symbol
@@ -467,8 +468,9 @@ public struct CardView : View
 	var cardMode : CardMode!//	{	GetCardMode()	}
 	var backing : LinearGradient!//any ShapeStyle//	{	GetBacking()	}
 
-	public init(cardMeta:CardMeta?,faceUp:Bool=true,z: CGFloat=0,shadows:Bool=true)
+	public init(cardMeta:CardMeta?,faceUp:Bool=true,z: CGFloat=0,shadows:Bool=true,debugString:String?=nil)
 	{
+		self.debugString = debugString
 		self.cardMeta = cardMeta
 		self.faceUp = faceUp
 		self.z = z
@@ -731,7 +733,11 @@ public struct CardView : View
 				let code = self.cardMeta.map{ "\($0.value) \($0.suit)" } ?? "null"
 				let up = faceUp ? "UP" : ""
 				Text("\(code) \(up)")
+				let debugName = debugString ?? ""
+				Text("\(code) \(up) \(uprev) \(debugName)")
+					.font(.system(size:8))
 					.background(.black)
+					.foregroundStyle(.white)
 			}
 		}
 		//	we dont set size here, only aspect ratio, this locks the geometry size for cardbody
