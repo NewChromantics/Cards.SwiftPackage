@@ -461,6 +461,7 @@ public struct CardView : View
 	var value : CardRank? { cardMeta?.value }
 	var suit : String? { cardMeta?.suit }	//	sf symbol
 	var faceUp : Bool
+	var pipOnly = false
 	var shadowsEnabled : Bool
 	var isSolidCard : Bool { cardMode != .EmptySlot }
 	var suitSystemImageName : String	{	return suit	?? "x.circle" }
@@ -468,11 +469,12 @@ public struct CardView : View
 	var cardMode : CardMode!//	{	GetCardMode()	}
 	var backing : LinearGradient!//any ShapeStyle//	{	GetBacking()	}
 
-	public init(cardMeta:CardMeta?,faceUp:Bool=true,z: CGFloat=0,shadows:Bool=true,debugString:String?=nil)
+	public init(cardMeta:CardMeta?,faceUp:Bool=true,pipOnly:Bool=false,z: CGFloat=0,shadows:Bool=true,debugString:String?=nil)
 	{
 		self.debugString = debugString
 		self.cardMeta = cardMeta
 		self.faceUp = faceUp
+		self.pipOnly = pipOnly
 		self.z = z
 		self.shadowsEnabled = shadows
 		
@@ -568,7 +570,7 @@ public struct CardView : View
 
 	
 	@ViewBuilder
-	var pipView : some View
+	func pipView() -> some View
 	{
 		//	special case :)
 		let multiColour = false//suit == "rainbow"
@@ -598,7 +600,7 @@ public struct CardView : View
 					.font(.system(size: style.pipHeight))
 					.fontWeight(.bold)
 
-				pipView
+				pipView()
 					.frame(width: style.pipWidth,height: style.pipHeight)
 				
 				if !center
@@ -678,6 +680,15 @@ public struct CardView : View
 									.fill(backing)
 									.padding(style.paperBackingBorder)
 									//.frame(maxWidth: .infinity,maxHeight: .infinity)
+							}
+							else if pipOnly
+							{
+								//cornerPipView(style,center: true)
+								pipView()
+									.clipShape( 
+										RoundedRectangle(cornerRadius: style.cornerRadius)
+									)
+									.padding(style.paperBorder)
 							}
 							else if style.isTinyCard
 							{

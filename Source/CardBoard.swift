@@ -68,14 +68,16 @@ public struct CardBoard : View
 	public var cards : [CardMeta]
 	public var explicitCardSpaces : Int? = nil
 	public var allCardsFaceUp : Bool = true
+	public var allCardsPipOnly : Bool = false
 	
-	public init(cardDeckNamespace: Namespace.ID, cards: [CardMeta], explicitCardSpaces: Int? = nil,allCardsFaceUp:Bool=true,debugName:String?=nil) 
+	public init(cardDeckNamespace: Namespace.ID, cards: [CardMeta], explicitCardSpaces: Int? = nil,allCardsFaceUp:Bool=true,allCardsPipOnly:Bool=false,debugName:String?=nil) 
 	{
 		self.debugName = debugName
 		self.cardDeckNamespace = cardDeckNamespace
 		self.cards = cards
 		self.explicitCardSpaces = explicitCardSpaces
 		self.allCardsFaceUp = allCardsFaceUp
+		self.allCardsPipOnly = allCardsPipOnly
 	}
 	
 	public var body: some View 
@@ -96,7 +98,7 @@ public struct CardBoard : View
 					ForEach(cards,id:\.hashValue)
 					{
 						card in
-						CardView(cardMeta: card, faceUp: allCardsFaceUp,debugString:debugName)
+						CardView(cardMeta: card, faceUp: allCardsFaceUp, pipOnly: allCardsPipOnly, debugString:debugName)
 							.overlay
 						{
 							/*
