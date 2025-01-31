@@ -324,8 +324,8 @@ public struct CardMeta : Transferable, Codable, Hashable, ExpressibleByStringLit
 		CodableRepresentation(contentType:.text)
 	}
 	
-	var value : CardRank
-	var suit : String
+	public var value : CardRank
+	public var suit : String
 
 	public init(stringLiteral: Self.StringLiteralType)
 	{
