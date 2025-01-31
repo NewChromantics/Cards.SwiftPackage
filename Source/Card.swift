@@ -734,7 +734,7 @@ public struct CardView : View
 				let up = faceUp ? "UP" : ""
 				Text("\(code) \(up)")
 				let debugName = debugString ?? ""
-				Text("\(code) \(up) \(uprev) \(debugName)")
+				Text("\(code) \(up) \(debugName)")
 					.font(.system(size:8))
 					.background(.black)
 					.foregroundStyle(.white)
