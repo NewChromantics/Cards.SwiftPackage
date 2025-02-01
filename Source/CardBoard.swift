@@ -56,17 +56,22 @@ public struct CardPile : View
 	}
 }
 
-
 public struct CardBoard : View 
 {
+	@Binding public var selectedCard : CardMeta?
+	var selectedCardZ = 20.0
+	var selectAnimation = Animation.spring(duration:0.1)
+	
+
 	var debugName : String? = nil
 	let cardDeckNamespace : Namespace.ID
 	public var cards : [CardMeta]
 	public var explicitCardSpaces : Int? = nil
 	public var allCardsFaceUp : Bool = true
 	public var allCardsPipOnly : Bool = false
-	
-	public init(cardDeckNamespace: Namespace.ID, cards: [CardMeta], explicitCardSpaces: Int? = nil,allCardsFaceUp:Bool=true,allCardsPipOnly:Bool=false,debugName:String?=nil) 
+	/*@ViewBuilder */var cardOverlay : ((CardMeta) -> AnyView)?
+
+	public init(cardDeckNamespace: Namespace.ID, cards: [CardMeta], explicitCardSpaces: Int? = nil,allCardsFaceUp:Bool=true,allCardsPipOnly:Bool=false,debugName:String?=nil,selectedCard:Binding<CardMeta?>?=nil,cardOverlay:((CardMeta) -> AnyView)?=nil) 
 	{
 		self.debugName = debugName
 		self.cardDeckNamespace = cardDeckNamespace
@@ -74,6 +79,8 @@ public struct CardBoard : View
 		self.explicitCardSpaces = explicitCardSpaces
 		self.allCardsFaceUp = allCardsFaceUp
 		self.allCardsPipOnly = allCardsPipOnly
+		self.cardOverlay = cardOverlay
+		self._selectedCard = selectedCard ?? Binding.constant(nil)
 	}
 	
 	public var body: some View 
@@ -94,16 +101,27 @@ public struct CardBoard : View
 					ForEach(cards,id:\.hashValue)
 					{
 						card in
-						CardView(cardMeta: card, faceUp: allCardsFaceUp, pipOnly: allCardsPipOnly, debugString:debugName)
+						let isSlected = card == selectedCard
+						let z = isSlected ? selectedCardZ : 0
+						CardView(cardMeta: card, faceUp: allCardsFaceUp, pipOnly: allCardsPipOnly, z:z, debugString:debugName)
+							.matchedGeometryEffect(id: card.hashValue, in: cardDeckNamespace)
 							.overlay
 						{
-							/*
-							 Text("\(card.hashValue)")
-							 .background(.black)
-							 .font(.system(size:8))
-							 */
+							VStack
+							{
+								if let cardOverlay
+								{
+									cardOverlay(card) 
+								}
+							}
 						}
-						.matchedGeometryEffect(id: card.hashValue, in: cardDeckNamespace)
+						.onTapGesture 
+						{
+							withAnimation(selectAnimation)
+							{
+								selectedCard = isSlected ? nil : card
+							}
+						}
 					}
 					/*
 					if cards.count < explicitCardSpaces ?? 0
@@ -136,96 +154,6 @@ public struct CardBoard : View
 
 
 
-public struct CardBoardWithSelection : View 
-{
-	@Binding public var selectedCard : CardMeta?
-	public var selectedCardZ = 20.0
-	public var selectAnimation = Animation.spring(duration:0.1)
-
-	var debugName : String? = nil
-	let cardDeckNamespace : Namespace.ID
-	public var cards : [CardMeta]
-	public var explicitCardSpaces : Int? = nil
-	public var allCardsFaceUp : Bool = true
-	public var allCardsPipOnly : Bool = false
-	
-	public init(cardDeckNamespace: Namespace.ID, cards: [CardMeta], explicitCardSpaces: Int? = nil,allCardsFaceUp:Bool=true,allCardsPipOnly:Bool=false,debugName:String?=nil,selectedCard:Binding<CardMeta?>) 
-	{
-		self.debugName = debugName
-		self.cardDeckNamespace = cardDeckNamespace
-		self.cards = cards
-		self.explicitCardSpaces = explicitCardSpaces
-		self.allCardsFaceUp = allCardsFaceUp
-		self.allCardsPipOnly = allCardsPipOnly
-		self._selectedCard = selectedCard
-	}
-	
-	public var body: some View 
-	{
-		VStack
-		{
-			GeometryReader
-			{
-				geo in
-				let style = CardStyle(fit:geo.size)
-				var cardWidth = style.width
-				var squashedCardWidth = geo.size.width / CGFloat(cards.count)
-				var overlapPx = max(-6,cardWidth - squashedCardWidth)
-				
-				//	look! we dont have to offset or a custom stack!
-				HStack(spacing:-overlapPx)
-				{
-					ForEach(cards,id:\.hashValue)
-					{
-						card in
-						let isSlected = card == selectedCard
-						let z = isSlected ? selectedCardZ : 0
-						CardView(cardMeta: card, faceUp: allCardsFaceUp, pipOnly: allCardsPipOnly, z: z, debugString:debugName)
-							.overlay
-						{
-							/*
-							 Text("\(card.hashValue)")
-							 .background(.black)
-							 .font(.system(size:8))
-							 */
-						}
-						.matchedGeometryEffect(id: card.hashValue, in: cardDeckNamespace)
-						.onTapGesture 
-						{
-							withAnimation(selectAnimation)
-							{
-								selectedCard = isSlected ? nil : card
-							}
-						}
-					}
-					/*
-					 if cards.count < explicitCardSpaces ?? 0
-					 {
-					 ForEach( cards.count...explicitCardSpaces )
-					 {
-					 CardView(cardMeta:nil)
-					 }
-					 }	
-					 */
-				}
-				.overlay
-				{
-					//Text("px \(overlapPx)").background(.black)
-				}
-				
-			}
-		}
-		//.padding(10)
-		.frame(maxWidth:.infinity)
-		/*
-		 .background(
-		 Rectangle()
-		 .stroke(.white,style: StrokeStyle(dash:[4,4]))
-		 .foregroundStyle(.clear)
-		 )
-		 */
-	}
-}
 
 struct ExampleTable : View 
 {
@@ -320,6 +248,13 @@ struct ExampleTable : View
 				}
 			CardBoard(cardDeckNamespace: cardDeck, cards: Cards2, debugName:"Middle" )
 			CardBoard(cardDeckNamespace: cardDeck, cards: Cards3, debugName:"Bottom" )
+			{
+				AnyView( 
+					Text("Hello \($0.suit)")
+						.background(.black)
+						.foregroundStyle(.white)
+				)
+			}
 			
 			HStack
 			{
