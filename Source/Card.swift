@@ -530,7 +530,7 @@ public struct CardView : View
 
 	
 	var z : CGFloat = 0
-	var zXMult : CGFloat { 0.2 }
+	var zXMult : CGFloat { 0.1 }
 	var zYMult : CGFloat { 1.0 }
 	var minz = 1.5
 	var depth : CGFloat { max(minz,z)	}

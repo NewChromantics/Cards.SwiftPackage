@@ -1,6 +1,25 @@
 import SwiftUI
 
 
+extension View 
+{
+	public func optionalOnTapGesture(enabled: Bool, count: Int = 1, perform action: @escaping () -> Void) -> some View 
+	{
+		Group 
+		{
+			if enabled 
+			{
+				self.onTapGesture(count: count, perform: action)
+			}
+			else 
+			{
+				self
+			}
+		}
+	}
+}
+
+
 public struct CardPile : View 
 {
 	var debugName : String?
@@ -8,19 +27,24 @@ public struct CardPile : View
 	var cards : [CardMeta]
 	public var allCardsFaceUp : Bool
 	public var allCardsPipOnly : Bool
+	var cardZSpacing : CGFloat
 
-	public init(cardDeckNamespace: Namespace.ID, cards: [CardMeta],debugName:String?=nil,allCardsFaceUp:Bool=false,allCardsPipOnly:Bool=false)
+	/*@ViewBuilder */var cardOverlay : ((CardMeta) -> AnyView)?
+
+	public init(cardDeckNamespace: Namespace.ID, cards: [CardMeta],debugName:String?=nil,allCardsFaceUp:Bool=false,allCardsPipOnly:Bool=false,cardZSpacing:CGFloat=0.9,cardOverlay:((CardMeta) -> AnyView)?=nil)
 	{
 		self.debugName = debugName
 		self.cardDeckNamespace = cardDeckNamespace
 		self.cards = cards
 		self.allCardsFaceUp = allCardsFaceUp
 		self.allCardsPipOnly = allCardsPipOnly
+		self.cardOverlay = cardOverlay
+		self.cardZSpacing = cardZSpacing
 	}
 
 	func getZOffset(cardIndex:Int) -> CGFloat
 	{
-		var z = CGFloat(cardIndex) * 0.9
+		var z = CGFloat(cardIndex) * cardZSpacing
 		//z = min( 10.0, z )
 		return -z
 	}
@@ -50,9 +74,20 @@ public struct CardPile : View
 			{
 				CardView(cardMeta: nil,debugString: self.debugName)
 			}
-			
 		}
-	
+		.overlay
+		{
+			VStack
+			{
+				if let firstCard = cards.first
+				{
+					if let cardOverlay
+					{
+						cardOverlay(firstCard) 
+					}
+				}
+			}
+		}
 	}
 }
 
@@ -61,7 +96,7 @@ public struct CardBoard : View
 	@Binding public var selectedCard : CardMeta?
 	var selectedCardZ = 20.0
 	var selectAnimation = Animation.spring(duration:0.1)
-	
+	var hasSelectedCardBinding : Bool	//	would be good to automatically work this out
 
 	var debugName : String? = nil
 	let cardDeckNamespace : Namespace.ID
@@ -81,6 +116,7 @@ public struct CardBoard : View
 		self.allCardsPipOnly = allCardsPipOnly
 		self.cardOverlay = cardOverlay
 		self._selectedCard = selectedCard ?? Binding.constant(nil)
+		self.hasSelectedCardBinding = selectedCard != nil ? true : false
 	}
 	
 	public var body: some View 
@@ -115,7 +151,7 @@ public struct CardBoard : View
 								}
 							}
 						}
-						.onTapGesture 
+						.optionalOnTapGesture(enabled:hasSelectedCardBinding)
 						{
 							withAnimation(selectAnimation)
 							{
@@ -176,7 +212,7 @@ struct ExampleTable : View
 	@Namespace private var cardDeck
 
 	//let anim = Animation.bouncy
-	let anim = Animation.bouncy
+	let anim = Animation.bouncy(duration:0.1)
 	
 	func MoveTopToBottom()
 	{
