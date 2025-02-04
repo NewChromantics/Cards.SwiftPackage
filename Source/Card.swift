@@ -333,16 +333,16 @@ public struct CardMeta : Transferable, Codable, Hashable, ExpressibleByStringLit
 	}
 	
 	//	shorthand for QH (queen heart)
-	public init(_ valueAndSuit:String)
+	public init(_ rankAndSuit:String)
 	{
-		if valueAndSuit.count < 2
+		if rankAndSuit.count < 2
 		{
 			//throw RuntimeError("CardMeta code needs to be at least 2 chars Value|Suit")
 			print("CardMeta code needs to be at least 2 chars Value|Suit")
 		}
-		let v = String(valueAndSuit[0])
-		self.value = CardRank(stringLiteral: v)
-		let suit = String(valueAndSuit[1...])
+		let rank = String(rankAndSuit[0])
+		self.value = CardRank(stringLiteral: rank)
+		let suit = String(rankAndSuit[1...])
 		self.suit = CardSuit.GetSuitFromCode(suit)
 	}
 		

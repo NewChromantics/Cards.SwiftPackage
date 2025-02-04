@@ -93,10 +93,14 @@ public struct CardPile : View
 
 public struct CardBoard : View 
 {
-	@Binding public var selectedCard : CardMeta?
+	@Binding public var selectedCards : [CardMeta]
 	var selectedCardZ = 20.0
 	var selectAnimation = Animation.spring(duration:0.1)
-	var hasSelectedCardBinding : Bool	//	would be good to automatically work this out
+	var maxSelectedCards : Int
+	var hasSelectedCardBinding : Bool
+	{
+		maxSelectedCards > 0
+	}
 
 	var debugName : String? = nil
 	let cardDeckNamespace : Namespace.ID
@@ -106,7 +110,7 @@ public struct CardBoard : View
 	public var allCardsPipOnly : Bool = false
 	/*@ViewBuilder */var cardOverlay : ((CardMeta) -> AnyView)?
 
-	public init(cardDeckNamespace: Namespace.ID, cards: [CardMeta], explicitCardSpaces: Int? = nil,allCardsFaceUp:Bool=true,allCardsPipOnly:Bool=false,debugName:String?=nil,selectedCard:Binding<CardMeta?>?=nil,cardOverlay:((CardMeta) -> AnyView)?=nil) 
+	public init(cardDeckNamespace: Namespace.ID, cards: [CardMeta], explicitCardSpaces: Int? = nil,allCardsFaceUp:Bool=true,allCardsPipOnly:Bool=false,debugName:String?=nil,selectedCards:Binding<[CardMeta]>?=nil,maxSelectedCards:Int=Int.max,cardOverlay:((CardMeta) -> AnyView)?=nil) 
 	{
 		self.debugName = debugName
 		self.cardDeckNamespace = cardDeckNamespace
@@ -115,8 +119,39 @@ public struct CardBoard : View
 		self.allCardsFaceUp = allCardsFaceUp
 		self.allCardsPipOnly = allCardsPipOnly
 		self.cardOverlay = cardOverlay
-		self._selectedCard = selectedCard ?? Binding.constant(nil)
-		self.hasSelectedCardBinding = selectedCard != nil ? true : false
+		self._selectedCards = selectedCards ?? Binding.constant([])
+		self.maxSelectedCards = selectedCards != nil ? maxSelectedCards : 0
+	}
+	
+	func isCardSelected(_ card:CardMeta) -> Bool
+	{
+		return selectedCards.firstIndex(of: card) != nil
+	}
+	
+	func ToggleCardSelection(_ card:CardMeta)
+	{
+		let isSelected = isCardSelected(card)
+		var newList : [CardMeta]
+		if isSelected // remove from list
+		{
+			newList = selectedCards.filter{$0 != card}
+		}
+		else // add to list
+		{
+			newList = selectedCards + [card]
+		}
+
+		//	don't exceed max
+		let cull = max( 0, newList.count-maxSelectedCards )
+		if cull > 0
+		{
+			newList.removeSubrange(0..<cull)
+		}
+		
+		withAnimation(selectAnimation)
+		{
+			selectedCards = newList
+		}
 	}
 	
 	public var body: some View 
@@ -137,8 +172,8 @@ public struct CardBoard : View
 					ForEach(cards,id:\.hashValue)
 					{
 						card in
-						let isSlected = card == selectedCard
-						let z = isSlected ? selectedCardZ : 0
+						let isSelected = isCardSelected(card)
+						let z = isSelected ? selectedCardZ : 0
 						CardView(cardMeta: card, faceUp: allCardsFaceUp, pipOnly: allCardsPipOnly, z:z, debugString:debugName)
 							.matchedGeometryEffect(id: card.hashValue, in: cardDeckNamespace)
 							.overlay
@@ -153,10 +188,7 @@ public struct CardBoard : View
 						}
 						.optionalOnTapGesture(enabled:hasSelectedCardBinding)
 						{
-							withAnimation(selectAnimation)
-							{
-								selectedCard = isSlected ? nil : card
-							}
+							ToggleCardSelection(card)
 						}
 					}
 					/*
@@ -210,6 +242,8 @@ struct ExampleTable : View
 	@State var Cards2 : [CardMeta] = []
 	@State var Cards3 : [CardMeta] = []
 	@Namespace private var cardDeck
+	@State var SelectedCards2 = [CardMeta]()
+	@State var SelectedCards3 = [CardMeta]()
 
 	//let anim = Animation.bouncy
 	let anim = Animation.bouncy(duration:0.1)
@@ -282,8 +316,8 @@ struct ExampleTable : View
 				.onTapGesture {
 					MoveTopToBottom()
 				}
-			CardBoard(cardDeckNamespace: cardDeck, cards: Cards2, debugName:"Middle" )
-			CardBoard(cardDeckNamespace: cardDeck, cards: Cards3, debugName:"Bottom" )
+			CardBoard(cardDeckNamespace: cardDeck, cards: Cards2, debugName:"Middle", selectedCards: $SelectedCards2, maxSelectedCards: 1 )
+			CardBoard(cardDeckNamespace: cardDeck, cards: Cards3, debugName:"Bottom", selectedCards: $SelectedCards3 )
 			{
 				AnyView( 
 					Text("Hello \($0.suit)")
