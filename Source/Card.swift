@@ -1,6 +1,100 @@
 import SwiftUI
 import Spatial
 
+/*
+
+func clamp(_ value:Int,minValue:Int,maxValue:Int) -> Int
+{
+	return max( minValue, min( maxValue, value ) )
+}
+
+func lerp(start:Double,end:Double,time:Double) -> Double
+{
+	return start + ( (end-start)*time )
+}
+
+func lerp(values:[Double],time:Double) -> Double
+{
+	if values.count <= 1
+	{
+		return values[0] ?? 0
+	}
+	print("time01=\(time)")
+	var index = Int( floor(time * Double(values.count)) )
+	var delta = time.truncatingRemainder(dividingBy: 1.0)
+	if ( index < 0 )
+	{
+		delta = 0
+		index = 0
+	}
+	var nextIndex = min( index + 1, values.count-1 )
+	if ( index >= values.count )
+	{
+		index = values.count - 1
+		delta = 1
+	}
+	let a = values[index]
+	let b = values[nextIndex]
+	return lerp( start:a, end:b, time:delta )
+}
+
+struct RotaterModifier : ViewModifier 
+{
+	let time01 : Double
+	let amount: Double
+	let anchor: UnitPoint = .center
+	var deg : Double
+	{
+		lerp( values:[0,90,359], time: time01 )
+		//time01 * 359.0
+	}
+	//let deg = lerp( values:[0,90,0], time: time01 )
+	//let deg = time01 * 90.0
+	
+	
+	func body(content: Content) -> some View 
+	{
+		Text("time01=\(time01)")
+		/ *
+		content
+			//.rotation3DEffect( .degrees(amount), axis: (x: 0, y: 1, z: 0), perspective:0.1 )
+			.rotationEffect(.degrees(deg), anchor: anchor)
+		//.clipped()
+	
+	}
+}
+
+struct RotatingFadeTransition: Transition {
+	func body(content: Content, phase: TransitionPhase) -> some View {
+		content
+			.opacity(phase.isIdentity ? 1.0 : 1.0)
+			.rotationEffect(phase.rotation)
+	}
+}
+extension TransitionPhase {
+	fileprivate var rotation: Angle {
+		switch self {
+			case .willAppear: return .degrees(90)
+			case .identity: return .degrees(0)
+			case .didDisappear: return .degrees(90)
+		}
+	}
+}
+*/
+/*
+public func Rotater() -> AnyTransition
+{
+	return AnyTransition( RotatingFadeTransition() )
+	
+	return AnyTransition.modifier(
+		active: RotaterModifier(time01:0,amount: -90), 
+		identity: RotaterModifier(time01:1,amount: 0)
+	)
+	
+}
+*/
+
+
 //	add .if modifier
 extension View {
 	/// Applies the given transform if the given condition evaluates to `true`.

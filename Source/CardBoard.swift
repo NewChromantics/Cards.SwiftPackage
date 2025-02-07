@@ -29,18 +29,32 @@ public struct CardPile : View
 	public var allCardsPipOnly : Bool
 	var cardZSpacing : CGFloat
 
-	/*@ViewBuilder */var cardOverlay : ((CardMeta) -> AnyView)?
+	var getCardModifier : ((CardMeta) -> any ViewModifier)
 
-	public init(cardDeckNamespace: Namespace.ID, cards: [CardMeta],debugName:String?=nil,allCardsFaceUp:Bool=false,allCardsPipOnly:Bool=false,cardZSpacing:CGFloat=0.9,cardOverlay:((CardMeta) -> AnyView)?=nil)
+	public init(cardDeckNamespace: Namespace.ID, cards: [CardMeta],debugName:String?=nil,allCardsFaceUp:Bool=false,allCardsPipOnly:Bool=false,cardZSpacing:CGFloat=0.9,cardModifier:((CardMeta) -> any ViewModifier)?=nil)
 	{
 		self.debugName = debugName
 		self.cardDeckNamespace = cardDeckNamespace
 		self.cards = cards
 		self.allCardsFaceUp = allCardsFaceUp
 		self.allCardsPipOnly = allCardsPipOnly
-		self.cardOverlay = cardOverlay
+		//self.getCardModifier = cardModifier ?? { EmptyCardViewModifer(card: CardMeta()) }
+		self.getCardModifier = cardModifier ?? { _ in EmptyModifier() }
 		self.cardZSpacing = cardZSpacing
 	}
+	/*
+	func cardModifier(card:CardMeta?) -> some ViewModifer
+	{
+		if let getCardModifier, let card
+		{
+			let m = getCardModifier(card) 
+			return m 
+		}
+		else
+		{
+			return EmptyCardViewModifer()
+		}
+	}*/
 
 	func getZOffset(cardIndex:Int) -> CGFloat
 	{
@@ -59,14 +73,6 @@ public struct CardPile : View
 			{
 				index,card in
 				CardView(cardMeta: card, faceUp: allCardsFaceUp, pipOnly: allCardsPipOnly, debugString:self.debugName)
-					.overlay
-				{
-					/*
-					 Text("\(card.hashValue)")
-					 .background(.black)
-					 .font(.system(size:8))
-					 */
-				}
 				.matchedGeometryEffect(id: card.hashValue, in: cardDeckNamespace)
 				.offset(x:0,y:getZOffset(cardIndex:index))
 			}
@@ -75,19 +81,8 @@ public struct CardPile : View
 				CardView(cardMeta: nil,debugString: self.debugName)
 			}
 		}
-		.overlay
-		{
-			VStack
-			{
-				if let firstCard = cards.first
-				{
-					if let cardOverlay
-					{
-						cardOverlay(firstCard) 
-					}
-				}
-			}
-		}
+		//.modifier(cardModifier(card: cards.first))
+		.modifier(getCardModifier(cards.first!))
 	}
 }
 
