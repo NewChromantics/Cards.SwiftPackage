@@ -1,6 +1,29 @@
 import SwiftUI
 
 
+
+struct LambdaViewModifier : ViewModifier
+{
+	var lambda : ((CardMeta,any View) -> AnyView)?
+	var card : CardMeta
+	
+	func body(content: Content) -> some View 
+	{
+		Group
+		{
+			if let lambda
+			{
+				lambda(card, content)
+			}
+			else
+			{
+				content
+			}
+		}
+	}
+}
+
+
 extension View 
 {
 	public func optionalOnTapGesture(enabled: Bool, count: Int = 1, perform action: @escaping () -> Void) -> some View 
@@ -108,9 +131,9 @@ public struct CardBoard : View
 	public var explicitCardSpaces : Int? = nil
 	public var allCardsFaceUp : Bool = true
 	public var allCardsPipOnly : Bool = false
-	/*@ViewBuilder */var cardOverlay : ((CardMeta) -> AnyView)?
+	public var cardModifier : ((CardMeta,any View) -> AnyView)?
 
-	public init(cardDeckNamespace: Namespace.ID, cards: [CardMeta], explicitCardSpaces: Int? = nil,allCardsFaceUp:Bool=true,allCardsPipOnly:Bool=false,debugName:String?=nil,selectedCards:Binding<[CardMeta]>?=nil,maxSelectedCards:Int=Int.max,cardOverlay:((CardMeta) -> AnyView)?=nil) 
+	public init(cardDeckNamespace: Namespace.ID, cards: [CardMeta], explicitCardSpaces: Int? = nil,allCardsFaceUp:Bool=true,allCardsPipOnly:Bool=false,debugName:String?=nil,selectedCards:Binding<[CardMeta]>?=nil,maxSelectedCards:Int=Int.max,cardModifier:((CardMeta,any View) -> AnyView)?=nil) 
 	{
 		self.debugName = debugName
 		self.cardDeckNamespace = cardDeckNamespace
@@ -118,7 +141,7 @@ public struct CardBoard : View
 		self.explicitCardSpaces = explicitCardSpaces
 		self.allCardsFaceUp = allCardsFaceUp
 		self.allCardsPipOnly = allCardsPipOnly
-		self.cardOverlay = cardOverlay
+		self.cardModifier = cardModifier
 		self._selectedCards = selectedCards ?? Binding.constant([])
 		self.maxSelectedCards = selectedCards != nil ? maxSelectedCards : 0
 	}
@@ -176,20 +199,11 @@ public struct CardBoard : View
 						let z = isSelected ? selectedCardZ : 0
 						CardView(cardMeta: card, faceUp: allCardsFaceUp, pipOnly: allCardsPipOnly, z:z, debugString:debugName)
 							.matchedGeometryEffect(id: card.hashValue, in: cardDeckNamespace)
-							.overlay
-						{
-							VStack
+							.modifier( LambdaViewModifier(lambda: cardModifier, card: card ) )
+							.optionalOnTapGesture(enabled:hasSelectedCardBinding)
 							{
-								if let cardOverlay
-								{
-									cardOverlay(card) 
-								}
+								ToggleCardSelection(card)
 							}
-						}
-						.optionalOnTapGesture(enabled:hasSelectedCardBinding)
-						{
-							ToggleCardSelection(card)
-						}
 					}
 					/*
 					if cards.count < explicitCardSpaces ?? 0
@@ -319,11 +333,14 @@ struct ExampleTable : View
 			CardBoard(cardDeckNamespace: cardDeck, cards: Cards2, debugName:"Middle", selectedCards: $SelectedCards2, maxSelectedCards: 1 )
 			CardBoard(cardDeckNamespace: cardDeck, cards: Cards3, debugName:"Bottom", selectedCards: $SelectedCards3 )
 			{
-				AnyView( 
-					Text("Hello \($0.suit)")
+				card,cardView in
+				let new = cardView.overlay
+				{
+					Text("Hello \(card.suit)")
 						.background(.black)
 						.foregroundStyle(.white)
-				)
+				}
+				return AnyView(new)
 			}
 			
 			HStack
