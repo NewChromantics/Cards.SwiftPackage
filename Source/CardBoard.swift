@@ -51,6 +51,11 @@ public struct CardPile : View
 	public var allCardsFaceUp : Bool
 	public var allCardsPipOnly : Bool
 	var cardZSpacing : CGFloat
+	var maxRaisedCards = 10.0
+	var maxCardYOffset : CGFloat
+	{
+		cardZSpacing * maxRaisedCards
+	}
 
 	/*@ViewBuilder */var cardOverlay : ((CardMeta) -> AnyView)?
 
@@ -68,7 +73,7 @@ public struct CardPile : View
 	func getZOffset(cardIndex:Int) -> CGFloat
 	{
 		var z = CGFloat(cardIndex) * cardZSpacing
-		//z = min( 10.0, z )
+		z = min( maxCardYOffset, z )
 		return -z
 	}
 	
